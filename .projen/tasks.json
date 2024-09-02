@@ -32,14 +32,15 @@
         "CHANGELOG": "dist/changelog.md",
         "BUMPFILE": "dist/version.txt",
         "RELEASETAG": "dist/releasetag.txt",
-        "RELEASE_TAG_PREFIX": ""
+        "RELEASE_TAG_PREFIX": "",
+        "BUMP_PACKAGE": "commit-and-tag-version@^12"
       },
       "steps": [
         {
           "builtin": "release/bump-version"
         }
       ],
-      "condition": "! git log --oneline -1 | grep -q \"chore(release):\""
+      "condition": "git log --oneline -1 | grep -qv \"chore(release):\""
     },
     "bundle-kics": {
       "name": "bundle-kics",
@@ -165,7 +166,12 @@
       "description": "Creates the distribution package",
       "steps": [
         {
-          "exec": "if [ ! -z ${CI} ]; then rsync -a . .repo --exclude .git --exclude node_modules && rm -rf dist && mv .repo dist; else npx projen package-all; fi"
+          "exec": "rsync -a . .repo --exclude .git --exclude node_modules && rm -rf dist && mv .repo dist",
+          "condition": "node -e \"if (!process.env.CI) process.exit(1)\""
+        },
+        {
+          "spawn": "package-all",
+          "condition": "node -e \"if (process.env.CI) process.exit(1)\""
         }
       ]
     },
@@ -259,7 +265,8 @@
         "CHANGELOG": "dist/changelog.md",
         "BUMPFILE": "dist/version.txt",
         "RELEASETAG": "dist/releasetag.txt",
-        "RELEASE_TAG_PREFIX": ""
+        "RELEASE_TAG_PREFIX": "",
+        "BUMP_PACKAGE": "commit-and-tag-version@^12"
       },
       "steps": [
         {
@@ -286,13 +293,13 @@
       },
       "steps": [
         {
-          "exec": "npx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@octokit/rest,@octokit/types,@types/fs-extra,@types/mock-fs,aws-cdk-lib,cdklabs-projen-project-types,eslint-import-resolver-typescript,eslint-plugin-import,fs-extra,jsii-diff,jsii-docgen,jsii-pacmak,mock-fs,projen,ts-node,typescript"
+          "exec": "npx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@octokit/rest,@octokit/types,@types/fs-extra,@types/mock-fs,aws-cdk-lib,cdklabs-projen-project-types,eslint-import-resolver-typescript,eslint-plugin-import,fs-extra,jsii-diff,jsii-pacmak,mock-fs,projen,ts-node,typescript"
         },
         {
           "exec": "yarn install --check-files"
         },
         {
-          "exec": "yarn upgrade @octokit/rest @octokit/types @types/fs-extra @types/jest @types/mock-fs @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk-lib cdklabs-projen-project-types constructs eslint-import-resolver-typescript eslint-plugin-import eslint fs-extra jest-junit jest jsii-diff jsii-docgen jsii-pacmak jsii-rosetta jsii mock-fs projen standard-version ts-jest ts-node typescript"
+          "exec": "yarn upgrade @octokit/rest @octokit/types @types/fs-extra @types/jest @types/mock-fs @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk-lib cdklabs-projen-project-types commit-and-tag-version constructs eslint-import-resolver-typescript eslint-plugin-import eslint fs-extra jest-junit jest jsii-diff jsii-docgen jsii-pacmak jsii-rosetta jsii mock-fs projen ts-jest ts-node typescript"
         },
         {
           "exec": "npx projen"
